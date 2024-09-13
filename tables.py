@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    create_engine, Integer, String, Float, ForeignKey, Text, Column, DateTime,
+    create_engine, Integer, String, Float, ForeignKey, Text, Column, DateTime, Boolean
 )
 from sqlalchemy.orm import relationship, sessionmaker, declarative_base
 
@@ -17,14 +17,14 @@ class Match(Base):
     map = Column(String, nullable=False)
     teams = Column(String, nullable=False)
 
-    #put in rounds once I get to it next week, or so.
     players = relationship('Player', back_populates='match')
-    #roundinfo = realationship()
-"""
-class RoundInformation(Base):
+    roundinfo = relationship('RoundInformation', back_populates='match')
 
+
+class RoundInformation(Base):
     __tablename__ = 'round_information'
-    
+
+    id = Column(Integer, primary_key=True)
     TeamAName = Column(String, nullable=False)
     TeamBName = Column(String, nullable=False)
     EconA = Column(Integer, nullable=False)
@@ -37,12 +37,17 @@ class RoundInformation(Base):
     PlayerPlanted = Column(String, nullable=False)
     RoundEndReason = Column(String, nullable=False)
     SideWon = Column(String, nullable=False)
-    KillARound = relationship('KillARound', back_populates='RoundInformation')
+
+    match_id = Column(Integer, ForeignKey('match.id'))
+    match = relationship('Match', back_populates='roundinfo')
+
+    round_kill = relationship('RoundKill', back_populates='roundinformation')
+
 
 class RoundKill(Base):
-
     __tablename__ = 'round_kill'
-    
+
+    id = Column(Integer, primary_key=True)  # Add a primary key
     TimeofKill = Column(DateTime, nullable=False)
     Killer = Column(String, nullable=False)
     KillerId = Column(Integer, nullable=False)
@@ -60,7 +65,9 @@ class RoundKill(Base):
     KillerWeapon = Column(Integer, nullable=False)
     KillerTeam = Column(Integer, nullable=False)
     VictimTeam = Column(Integer, nullable=False)
-"""
+
+    roundinformation_id = Column(Integer, ForeignKey('round_information.id'))
+    roundinformation = relationship('RoundInformation', back_populates='round_kill')
 
 class Player(Base):
     __tablename__ = 'player'

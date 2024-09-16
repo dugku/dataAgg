@@ -5,7 +5,6 @@ from sqlalchemy.orm import relationship, sessionmaker, declarative_base
 import json
 import os
 from tables import *
-
 """
 This entire solution is trivial in a sense
 Because I was doing this in fastAPI at first
@@ -16,27 +15,85 @@ So I just wrote this up since it would've been easier to deal with.
 Session = sessionmaker(bind=engine)
 session = Session()
 
-Base.metadata.create_all(engine)
-
 #Reads the json file from the data folder
 def readJsonFiles(dirPath):
     for i in os.listdir(dirPath):
         with open(os.path.join(dirPath, i), 'r') as f:
             data = json.load(f)
-        dataBaseStuff(data)
+            rounds = data.get("Match", {}).get("rounds", [])
+
+            # Filter out rounds where 'KillARound' is None or not a dict
+            valid_rounds = []
+            for index, round_data in enumerate(rounds):
+                if not isinstance(round_data, dict):
+                    print(f"Round {index} is invalid or None.")
+                    continue
+                kill_a_round = round_data.get("KillARound")
+                if kill_a_round is None:
+                    print(f"Round {index} has KillARound set to null or missing.")
+                    continue
+                elif not isinstance(kill_a_round, dict):
+                    print(f"Round {index} has unexpected KillARound type: {type(kill_a_round)}")
+                    continue
+                # If all checks pass, add the round to the valid rounds list
+                valid_rounds.append(round_data)
+
+            # Update the data with only valid rounds
+            data["Match"]["rounds"] = valid_rounds
+
+            dataBaseStuff(data)
 
 #does database magic stuff
 def dataBaseStuff(data):
     #assigns the stuff for the match
+    match_info = data['Match']
+
     match = Match (
-        map=data['map'],
-        teams=data['teams'],
+        map=match_info['maps'],
+        teams=match_info['teams'],
     )
     session.add(match)
     session.flush()
 
+    for rounds in match_info['rounds']:
+            round = RoundInformation (
+                TeamAName=rounds['TeamNameA'],
+                TeamBName=rounds['TeamNameB'],
+                EconA=rounds['EconA'],
+                EconB=rounds['EconB'],
+                TypeofBuyA=rounds['TypeofBuyA'],
+                TypeofBuyB=rounds['TypeofBuyB'],
+                ScoreA=rounds['ScoreA'],
+                ScoreB=rounds['ScoreB'],
+                BombPlanted=rounds["BombPlanted"],
+                PlayerPlanted=rounds['PlayerPlanted'],
+                RoundEndReason=rounds['RoundEndedReason'],
+                SideWon=rounds['SideWon'],
+            )
+
+            session.add(round)
+            session.flush()
+
+            for key, roundKill in rounds['KillARound'].items():
+                rKill = RoundKill(
+                    Killer=roundKill['Killer'],
+                    Victim=roundKill['Victim'],
+                    KillerId=roundKill['KillerId'],
+                    VictId=roundKill['VictId'],
+                    Assistor=roundKill['Assistor'],
+                    KillerTeamString=roundKill['KillerTeamString'],
+                    VictimTeamString=roundKill['VictimTeamString'],
+                    AttDmgTaken=roundKill['AttackerHealth'],
+                    IsHeadshot=roundKill['IsHeadshot'],
+                    IsFlashed=roundKill['IsFlashed'],
+                    KillerTeam=roundKill['KillerTeam'],
+                    VictimTeam=roundKill['VictTeam']
+
+                )
+                session.add(rKill)
+
     #Get player data yikes really big
-    for _, players in data["players"].items():
+    for _, players in match_info["players"].items():
        player = Player(
            match_id=match.id,
            name=players["name"],
@@ -88,16 +145,6 @@ def dataBaseStuff(data):
            session.add(weapon_kill)
     session.commit()
 
-#query stuff to see if this work and it does.
-def queryDat():
-    matches = session.query(Match).all()
-
-    for match in matches:
-        print(match.id, match.map, match.teams)
-        for player in match.players:
-            print(player.name, player.kills, player.deaths, player.assists, player.headshots)
-
-
 #These two methods below are for testing since we need to test don't we?
 def dropall():
     Base.metadata.drop_all(engine)
@@ -111,6 +158,4 @@ dropall()
 
 createTabs()
 
-readJsonFiles("C:\\Users\\iphon\\PycharmProjects\\dataAgg\\MatchDat")
-
-queryDat()
+readJsonFiles("C:\\Users\\iphon\\PycharmProjects\\dataAgg\\stuff")

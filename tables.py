@@ -3,8 +3,10 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship, sessionmaker, declarative_base
 
-engine = create_engine('sqlite:///example.db')
+
+engine = create_engine('sqlite:///yes.db')
 Base = declarative_base()
+
 
 #Below is all the tables that I'll ever needs
 #still only giving this half the data
@@ -48,7 +50,7 @@ class RoundKill(Base):
     __tablename__ = 'round_kill'
 
     id = Column(Integer, primary_key=True)  # Add a primary key
-    TimeofKill = Column(DateTime, nullable=False)
+    #TimeofKill = Column(DateTime, nullable=False)
     Killer = Column(String, nullable=False)
     KillerId = Column(Integer, nullable=False)
     VictId = Column(Integer, nullable=False)
@@ -56,13 +58,13 @@ class RoundKill(Base):
     Assistor = Column(String, nullable=False)
     KillerTeamString = Column(String, nullable=False)
     VictimTeamString = Column(String, nullable=False)
-    VictFlshDur = Column(DateTime, nullable=False)
-    VictDmgTaken = Column(Integer, nullable=False)
+    #VictFlshDur = Column(DateTime, nullable=False)
+    #VictDmgTaken = Column(Integer, nullable=False)
     AttDmgTaken = Column(Integer, nullable=False)
     IsHeadshot = Column(Boolean, nullable=False)
     IsFlashed = Column(Boolean, nullable=False)
-    Dist = Column(Integer, nullable=False)
-    KillerWeapon = Column(Integer, nullable=False)
+    #Dist = Column(Integer, nullable=False)
+    #KillerWeapon = Column(Integer, nullable=False)
     KillerTeam = Column(Integer, nullable=False)
     VictimTeam = Column(Integer, nullable=False)
 
@@ -126,3 +128,8 @@ class PlayerWeaponKills(Base):
 
     # Relationship
     player = relationship('Player', back_populates='weapon_kills')
+
+
+
+Base.metadata.create_all(engine)
+

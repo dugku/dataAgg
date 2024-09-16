@@ -141,7 +141,8 @@ def dataBaseStuff(data):
            weapon_kill = PlayerWeaponKills(
                player_id=player.id,
                weapon_id=weapon_id,
-               kills=kills
+               kills=kills,
+               player_steam_id=player.steam_id
            )
            session.add(weapon_kill)
     session.commit()

@@ -4,91 +4,10 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship, sessionmaker, declarative_base
 import json
 import os
-
-"""
-This entire solution is trivial in a sense
-Because I was doing this in fastAPI at first
-But it was duplicating some of the players
-So I just wrote this up since it would've been easier to deal with.
-"""
-
-engine = create_engine('sqlite:///example.db')
-Base = declarative_base()
+from tables import *
 
 Session = sessionmaker(bind=engine)
 session = Session()
-
-#Tables needed for this to work
-#will need more later since I am only give this half the data
-class Match(Base):
-    __tablename__ = 'match'
-
-    id = Column(Integer, primary_key=True)
-    map = Column(String, nullable=False)
-    teams = Column(String, nullable=False)
-
-    players = relationship('Player', back_populates='match')
-
-
-class Player(Base):
-    __tablename__ = 'player'
-
-    id = Column(Integer, primary_key=True)
-    match_id = Column(Integer, ForeignKey('match.id'), nullable=False)
-    steam_id = Column(Integer, nullable=False)
-    name = Column(String, nullable=False)
-    impact = Column(Float)
-    kills = Column(Integer)
-    deaths = Column(Integer)
-    assists = Column(Integer)
-    headshots = Column(Integer)
-    hspercent = Column(Float)
-    ADR = Column(Float)
-    KSAST = Column(Integer)
-    kdratio = Column(Float)
-    firstkill = Column(Integer)
-    firstdeath = Column(Integer)
-    fkdiff = Column(Integer)
-    round2k = Column(Integer)
-    round3k = Column(Integer)
-    round4k = Column(Integer)
-    round5k = Column(Integer)
-    totaldmg = Column(Integer)
-    tradekills = Column(Integer)
-    tradedeaths = Column(Integer)
-    ctkills = Column(Integer)
-    tkills = Column(Integer)
-    effflashes = Column(Integer)
-    avgflsduration = Column(Float)
-    avgdist = Column(Float)
-    totaldist = Column(Float)
-    flashthrown = Column(Integer)
-    clanname = Column(String)
-    totalultildmg = Column(Integer)
-    avgkillsrnd = Column(Float)
-    avgdeathsrnd = Column(Float)
-    avgassistrnd = Column(Float)
-    roundsurvived = Column(Integer)
-    roundtraded = Column(Integer)
-
-    # Relationships
-    match = relationship('Match', back_populates='players')
-    weapon_kills = relationship(
-        "PlayerWeaponKills",
-        back_populates="player",
-    )
-
-class PlayerWeaponKills(Base):
-    __tablename__ = "player_weapon_kills"
-    id = Column(Integer, primary_key=True)
-    player_id = Column(Integer, ForeignKey("player.id"))
-    weapon_id = Column(String)
-    kills = Column(Integer)
-
-    # Relationship
-    player = relationship('Player', back_populates='weapon_kills')
-
-Base.metadata.create_all(engine)
 
 #Reads the json file from the data folder
 def readJsonFiles(dirPath):

@@ -69,6 +69,7 @@ def dataBaseStuff(data):
                 PlayerPlanted=rounds['PlayerPlanted'],
                 RoundEndReason=rounds['RoundEndedReason'],
                 SideWon=rounds['SideWon'],
+                match_id=match.id
             )
 
             session.add(round)
@@ -87,8 +88,8 @@ def dataBaseStuff(data):
                     IsHeadshot=roundKill['IsHeadshot'],
                     IsFlashed=roundKill['IsFlashed'],
                     KillerTeam=roundKill['KillerTeam'],
-                    VictimTeam=roundKill['VictTeam']
-
+                    VictimTeam=roundKill['VictTeam'],
+                    roundinformation_id=round.id
                 )
                 session.add(rKill)
 

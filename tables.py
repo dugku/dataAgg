@@ -118,6 +118,7 @@ class Player(Base):
         "PlayerWeaponKills",
         back_populates="player",
     )
+    player_weaponkills = relationship("PlayWeaponKills", back_populates="player")
 
 class PlayerWeaponKills(Base):
     __tablename__ = "player_weapon_kills"
@@ -125,9 +126,11 @@ class PlayerWeaponKills(Base):
     player_id = Column(Integer, ForeignKey("player.id"))
     weapon_id = Column(String)
     kills = Column(Integer)
+    player_steam = Column(Integer, ForeignKey("player.steam_id"))
 
     # Relationship
     player = relationship('Player', back_populates='weapon_kills')
+    player_steamid = relationship('Player', back_populates='weapons')
 
 
 

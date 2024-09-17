@@ -1,4 +1,5 @@
 import math
+import statistics
 
 from main import *
 
@@ -16,6 +17,12 @@ class PlayerStats:
         self.headshotPercent = 0
         self.ctkills = 0
         self.tkills = 0
+        self.alladrs = []
+        self.allkds = []
+        self.allimpacts = []
+        self.avgimpact = 0
+        self.avgadr = 0
+        self.avgkdratio = 0
         self.weaponStats = {
             "EqUnknown": 0, "EqP2000": 0, "EqGlock": 0, "EqP250": 0,
             "EqDeagle": 0, "EqFiveSeven": 0, "EqDualBerettas": 0,
@@ -64,33 +71,56 @@ class PlayerStats:
 
     def addweaponstats(self, name, num):
         self.weaponStats[name] += num
+
+    def addalladrs(self, num):
+        self.alladrs.append(num)
+
+    def calcadr(self):
+        self.avhadr = round(statistics.mean(self.alladrs), 2)
+
+    def addkdratio(self, num):
+        self.allkds.append(num)
+
+    def calckdratio(self):
+        self.avgkdratio = round(statistics.mean(self.allkds), 2)
+
+    def addallimpact(self, num):
+        self.allimpacts.append(num)
+
+    def calcimpact(self):
+        self.avgimpact = round(statistics.mean(self.allimpacts), 2)
+
+
 def queryThis():
-    stmt = session.query(Player).filter(Player.steam_id == 76561198214009861).all()
-    weapon = session.query(PlayerWeaponKills).filter(PlayerWeaponKills.player_steam_id == 76561198214009861).all()
+
+    sweet = session.query(Player.steam_id).distinct().all()
+
+
+    stmt = session.query(Player).filter(Player.steam_id == 76561198173201923).all()
+    weapon = session.query(PlayerWeaponKills).filter(PlayerWeaponKills.player_steam_id == 76561198173201923).all()
 
 
 
 
-    sweet = getStats(stmt, weapon)
+    player_stats = getStats(stmt, weapon)
 
-    for i in sweet:
-        print(i.name)
-        print(f"Kills:{i.kills} Deaths:{i.deaths} Assists:{i.assists} Headshots:{i.headshots}")
-        print(f"headshot Percent{i.headshotPercent} firstkill:{i.firstKill} firstdeath:{i.firstDeath}")
-        print(f"ctkills {i.ctkills} tkills {i.tkills}")
+    if player_stats:
+        print(player_stats.name)
+        print(f"Kills: {player_stats.kills} Deaths: {player_stats.deaths} Assists: {player_stats.assists} Headshots: {player_stats.headshots}")
+        print(f"Headshot Percent: {player_stats.headshotPercent}% First Kill: {player_stats.firstKill} First Death: {player_stats.firstDeath}")
+        print(f"ADR: {player_stats.avhadr} KD ratio: {player_stats.avgkdratio} Impact {player_stats.avgimpact}")
+        print(f"CT Kills: {player_stats.ctkills} T Kills: {player_stats.tkills}")
 
-        for i,x in i.weaponStats.items():
-
-            if x == 0:
-                continue
-
-            print(f"Weapon Name:{i} Kill: {x}")
+        for weapon_name, kills in player_stats.weaponStats.items():
+            if kills > 0:
+                print(f"Weapon Name: {weapon_name} Kills: {kills}")
 
 def getStats(playerObj, weaponObj):
     player_stats_lst = []
 
+    player = PlayerStats(playerObj[0].steam_id)
+
     for stats in playerObj:
-        player = PlayerStats(stats.steam_id)
 
         player.addkill(stats.kills)  # Use the correct method names
         player.adddeath(stats.deaths)
@@ -99,17 +129,24 @@ def getStats(playerObj, weaponObj):
         player.addfirstkill(stats.firstkill)
         player.addfirstdeath(stats.firstdeath)
         player.addheadshot(stats.headshots)
-        player.addheadshotpercent()
         player.addctkill(stats.ctkills)
         player.addtkill(stats.tkills)
+        player.addalladrs(stats.ADR)
+        player.addkdratio(stats.kdratio)
+        player.addallimpact(stats.impact)
 
-        for wepstat in weaponObj:
-            weaponName = wepNames(int(wepstat.weapon_id))
-            player.addweaponstats(weaponName, wepstat.kills)
+        player.addheadshotpercent()
+        player.calcadr()
+        player.calckdratio()
+        player.calcimpact()
 
-        player_stats_lst.append(player)
 
-    return player_stats_lst
+    for wepstat in weaponObj:
+        weaponName = wepNames(int(wepstat.weapon_id))
+        player.addweaponstats(weaponName, wepstat.kills)
+
+
+    return player
 
 def wepNames(wepId):
     equipment_types = {

@@ -1,3 +1,5 @@
+import re
+
 from sqlalchemy import (
     create_engine, Integer, String, Float, ForeignKey, Text, Column, DateTime,
 )
@@ -16,11 +18,22 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 #Reads the json file from the data folder
-def readJsonFiles(dirPath):
-    for i in os.listdir(dirPath):
-        with open(os.path.join(dirPath, i), 'r') as f:
+def readJsonFiles(filepath):
+    count = 0
+
+    for _, v in enumerate(filepath):
+        with open(v, 'r', encoding="utf8") as f:
             data = json.load(f)
-            rounds = data.get("Match", {}).get("rounds", [])
+
+            match_data = data.get("Match")
+            if not isinstance(match_data, dict):
+                print(f"No valid 'Match' data in file {v}.")
+                continue
+
+            rounds = match_data.get("rounds", [])
+            if not isinstance(rounds, list):
+                print(f"No valid 'rounds' data in file {v}.")
+                continue
 
             # Filter out rounds where 'KillARound' is None or not a dict
             valid_rounds = []
@@ -41,7 +54,24 @@ def readJsonFiles(dirPath):
             # Update the data with only valid rounds
             data["Match"]["rounds"] = valid_rounds
 
+            # Check if there are any valid rounds before processing
+            if not valid_rounds:
+                print(f"No valid rounds to process in file {v}.")
+                continue
+
             dataBaseStuff(data)
+
+def num_sort(value):
+    parts = re.findall(r'\d+', value)
+
+    return int(parts[0]) if parts else 0
+
+def getFilePaths(dirPath):
+    filepaths = [os.path.join(dirPath, f) for f in os.listdir(dirPath) if f.endswith('.json')]
+
+    # Sort filepaths numerically by the numeric part of the filename
+    filepaths_sorted = sorted(filepaths, key=num_sort)
+    readJsonFiles(filepaths_sorted)
 
 #does database magic stuff
 def dataBaseStuff(data):
@@ -160,4 +190,4 @@ dropall()
 
 createTabs()
 
-readJsonFiles("C:\\Users\\iphon\\PycharmProjects\\dataAgg\\stuff")
+getFilePaths("C:\\Users\\Mike\\Desktop\\dataAgg\\stuff")

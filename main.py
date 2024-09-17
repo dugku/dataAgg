@@ -190,4 +190,4 @@ dropall()
 
 createTabs()
 
-getFilePaths("C:\\Users\\Mike\\Desktop\\dataAgg\\stuff")
+getFilePaths("C:\\Users\\iphon\\PycharmProjects\\dataAgg\\stuff")

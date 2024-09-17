@@ -1,42 +1,115 @@
+import math
+
 from main import *
 
+class PlayerStats:
+    def __init__(self, steam_id):
+        self.steam_id = steam_id
+        self.name = ""
+        self.kills = 0
+        self.deaths = 0
+        self.assists = 0
+        self.matches = []
+        self.firstKill = 0
+        self.firstDeath = 0
+        self.headshots = 0
+        self.headshotPercent = 0
+        self.ctkills = 0
+        self.tkills = 0
+        self.weaponStats = {
+            "EqUnknown": 0, "EqP2000": 0, "EqGlock": 0, "EqP250": 0,
+            "EqDeagle": 0, "EqFiveSeven": 0, "EqDualBerettas": 0,
+            "EqTec9": 0, "EqCZ": 0, "EqUSP": 0, "EqRevolver": 0,
+            "EqMP7": 0, "EqMP9": 0, "EqBizon": 0, "EqMac10": 0,
+            "EqUMP": 0, "EqP90": 0, "EqMP5": 0, "EqSawedOff": 0,
+            "EqNova": 0, "EqMag7": 0, "EqXM1014": 0, "EqM249": 0,
+            "EqNegev": 0, "EqGalil": 0, "EqFamas": 0, "EqAK47": 0,
+            "EqM4A4": 0, "EqM4A1": 0, "EqScout": 0, "EqSG556": 0,
+            "EqAUG": 0, "EqAWP": 0, "EqScar20": 0, "EqG3SG1": 0,
+            "EqZeus": 0, "EqBomb": 0, "EqKnife": 0, "EqDecoy": 0,
+            "EqMolotov": 0, "EqIncendiary": 0, "EqFlash": 0,
+            "EqSmoke": 0, "EqHE": 0, "EqWorld": 0
+        }
+
+    def addkill(self, num):
+        self.kills += num
+
+    def adddeath(self, num):
+        self.deaths += num
+
+    def addassist(self, num):
+        self.assists += num
+
+    def addmatch(self, num):
+        self.matches.append(num)
+
+    def addfirstkill(self, num):
+        self.firstKill += num
+
+    def addfirstdeath(self, num):
+        self.firstDeath += num
+
+    def addheadshot(self, num):
+        self.headshots += num
+
+    def addheadshotpercent(self):
+        if self.kills > 0:  # Prevent division by zero
+            self.headshotPercent = math.floor((self.headshots / self.kills) * 100)
+
+    def addctkill(self, num):
+        self.ctkills += num
+
+    def addtkill(self, num):
+        self.tkills += num
+
+    def addweaponstats(self, name, num):
+        self.weaponStats[name] += num
 def queryThis():
     stmt = session.query(Player).filter(Player.steam_id == 76561198214009861).all()
+    weapon = session.query(PlayerWeaponKills).filter(PlayerWeaponKills.player_steam_id == 76561198214009861).all()
 
-    allStats =  {
-        "kills" : 0,
-        "deaths" : 0,
-        "assists" : 0,
-        "matches": [],
-        "firstKill": 0,
-        "firstDeath": 0,
-        "headshots":0,
-        "ctkills":0,
-        "tkills":0,
-        "weaponStats": [],
-    }
 
-    for stats in stmt:
-        allStats["matches"].append(stats.match_id)
-        allStats["kills"] += stats.kills
-        allStats["deaths"] += stats.deaths
-        allStats["assists"] += stats.assists
-        allStats["firstKill"] += stats.firstkill
-        allStats["firstDeath"] += stats.firstdeath
-        allStats["headshots"] += stats.headshots
-        allStats["ctkills"] += stats.ctkills
-        allStats["tkills"] += stats.tkills
 
-        weaps = session.query(PlayerWeaponKills).filter(PlayerWeaponKills.player_steam_id == 76561198214009861).all()
 
-        for i in weaps:
-            allStats["weaponStats"].append({
-                "wepName": wepNames(int(i.weapon_id)),
-                "kills": i.kills
-            })
-            print(i.weapon_id)
+    sweet = getStats(stmt, weapon)
 
-    print(allStats)
+    for i in sweet:
+        print(i.name)
+        print(f"Kills:{i.kills} Deaths:{i.deaths} Assists:{i.assists} Headshots:{i.headshots}")
+        print(f"headshot Percent{i.headshotPercent} firstkill:{i.firstKill} firstdeath:{i.firstDeath}")
+        print(f"ctkills {i.ctkills} tkills {i.tkills}")
+
+        for i,x in i.weaponStats.items():
+
+            if x == 0:
+                continue
+
+            print(f"Weapon Name:{i} Kill: {x}")
+
+def getStats(playerObj, weaponObj):
+    player_stats_lst = []
+
+    for stats in playerObj:
+        player = PlayerStats(stats.steam_id)
+
+        player.addkill(stats.kills)  # Use the correct method names
+        player.adddeath(stats.deaths)
+        player.addassist(stats.assists)
+        player.addmatch(stats.match)
+        player.addfirstkill(stats.firstkill)
+        player.addfirstdeath(stats.firstdeath)
+        player.addheadshot(stats.headshots)
+        player.addheadshotpercent()
+        player.addctkill(stats.ctkills)
+        player.addtkill(stats.tkills)
+
+        for wepstat in weaponObj:
+            weaponName = wepNames(int(wepstat.weapon_id))
+            player.addweaponstats(weaponName, wepstat.kills)
+
+        player_stats_lst.append(player)
+
+    return player_stats_lst
 
 def wepNames(wepId):
     equipment_types = {
